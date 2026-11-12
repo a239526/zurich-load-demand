@@ -1,5 +1,5 @@
 from create_parquet import save_processed_data, read_processed_data
-from meter_statistics import save_meter_statistics
+from meter_statistics import save_statistics
 
 PROCESSED_PATH = "outputs/smart_meter_data.parquet"
 
@@ -14,4 +14,4 @@ if __name__ == "__main__":
         save_processed_data(AVAILABLE_DATA_THRESHOLD, INSTALLATION_TYPES, PROCESSED_PATH)
 
     meters_id, data = read_processed_data(PROCESSED_PATH)
-    meter_statistics = save_meter_statistics(data, "outputs/meter_statistics.csv")
+    meter_statistics, summary = save_statistics(data, "outputs/meter_statistics.csv", "outputs/statistics_summary.json")
