@@ -111,3 +111,14 @@ def save_processed_data(threshold=0.95, installation_types=None, output_path=PRO
     print(f"Processed data saved to: {output_path}")
 
     return combined_data
+
+def read_processed_data(input_path=PROCESSED_PATH):
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Processed data file not found at {input_path}")
+
+    df = pd.read_parquet(input_path)
+
+    # creates a dictionary with meter_id as keys and corresponding dataframes as values
+    meters_id = df["meter_id"].unique().tolist()
+    data = {meter_id: meter_data.drop(columns="meter_id").reset_index(drop=True) for meter_id, meter_data in df.groupby("meter_id")}
+    return meters_id, data
