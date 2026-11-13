@@ -1,3 +1,4 @@
+
 # Electricity Demand Generation
 
 ## Overview
@@ -11,7 +12,7 @@ The generated profiles have a 15-minute resolution and are available in two conf
 
 The repository includes configurations for four distribution network cases: case5, case13, case34, and case123. Custom cases can also be added by creating a corresponding bus configuration.
 
-Additionally, the scripts generate meter statistics and save the allocation of selected meters and their corresponding maximum power scaling factors for each bus and phase.
+Additionally, the scripts generate meter statistics, save the allocation of selected meters and their corresponding maximum power scaling factors for each bus and phase, and generate plots to visualize the resulting demand profiles.
 
 ## Data Source
 
@@ -57,7 +58,7 @@ The original dataset contains residential electricity measurements at 15-minute 
    python main.py
    ```
 
-The script processes the smart meter data, calculates meter statistics, filters the available profiles, and generates the demand CSV and meter allocation JSON files for each selected case.
+The script processes the smart meter data, calculates meter statistics, filters the available profiles, and generates the demand CSV and meter allocation JSON files for each selected case. It can also generate plots of the resulting demand profiles.
 
 ## Configuration
 
@@ -72,6 +73,7 @@ INSTALLATION_TYPES = ["Single-family house", "Common areas", "Apartment"]
 
 CASES = [5, 13, 34, 123]
 UNBALANCED = True
+GENERATE_PLOTS = True
 ```
 
 | Parameter                    | Description                                                                                                                                                                                         |
@@ -82,6 +84,7 @@ UNBALANCED = True
 | `INSTALLATION_TYPES`       | List of installation types to retain during metadata filtering.                                                                                                                                     |
 | `CASES`                    | List of network cases to generate demand for. Current supported values are `5`, `13`, `34`, and `123`.                                                                                      |
 | `UNBALANCED`               | If `True`, generates separate demand profiles for each phase. If `False`, generates one aggregated profile per bus.                                                                             |
+| `GENERATE_PLOTS`           | If `True`, generates and saves demand plots for each selected case.                                                                                                                               |
 
 The Parquet file only needs to be created once using the desired threshold and installation types configuration. Afterward, set `CREATE_PARQUET = False` to avoid processing the original meter files again.
 
@@ -145,7 +148,7 @@ Three independent seeds control meter selection, maximum power generation, and p
 ```python
 SEED_METER = 42
 SEED_CONSUMPTION = 123
-SEED_PHASE = 456
+SEED_PHASE = 234
 ```
 
 The random number generators are initialized inside `create_demand_csv()`, allowing reproducible results for repeated calls with the same inputs and configuration.
@@ -233,6 +236,22 @@ For the balanced configuration, all selected meter profiles are aggregated into 
 
 The script also records the meter IDs, consumption categories, and maximum power scaling factors associated with each bus and phase.
 
+### 5. Demand visualization
+
+The `generate_plots.py` script generates and saves plots from the demand CSV files created by `create_demand_csv.py`.
+
+For each selected case, three plots are generated:
+
+- **Bus time series:** Active and reactive power demand over the entire simulation period for the selected bus (in `main.py`, the first bus with assigned meters). The mean demand is also displayed.
+- **Bus average daily profile:** Average active and reactive power demand at each time interval of the day for the same bus, including the mean values.
+- **Total average daily profile:** Average total active and reactive power demand across all buses at each time interval of the day, including the mean values.
+
+For unbalanced demand files, the individual bus plots show the sum of the three phases. The total demand plots also account for all phases.
+
+Plots are generated when `GENERATE_PLOTS = True` in `main.py`. The `UNBALANCED` setting determines which demand CSV files are read.
+
+All plots are saved in the corresponding `outputs/caseX/` folder.
+
 ## Outputs
 
 All generated files are saved under `outputs/`. The directory is created automatically when needed.
@@ -244,6 +263,9 @@ All generated files are saved under `outputs/`. The directory is created automat
 | `statistics_summary.json`                                   | Aggregated statistics by installation type and consumption category.                                              |
 | `{case}/{balanced\|unbalanced}_demand.csv`                   | Generated demand profiles for each selected case.                                                                 |
 | `{case}/{balanced\|unbalanced}_demand_meter_allocation.json` | Meter allocation and scaling factors used to generate the corresponding demand profiles.                          |
+| `{case}/bus_<bus_id>_time_series.png`                       | Active and reactive power time series for the first bus with assigned meters.                                     |
+| `{case}/bus_<bus_id>_daily_average.png`                     | Average daily active and reactive power profiles for the first bus with assigned meters.                          |
+| `{case}/total_daily_average.png`                            | Average daily total active and reactive power profiles across all buses.                                          |
 
 Each demand CSV contains one row per timestamp and separate columns for active and reactive power.
 
@@ -285,6 +307,7 @@ zurich-load-demand/
 ├── meter_statistics.py     # Calculates individual and aggregated meter statistics
 ├── data_treatment.py       # Normalizes and filters meter profiles
 ├── create_demand_csv.py    # Generates synthetic demand profiles and meter allocation files
+├── generate_plots.py       # Generates and saves demand profile plots
 ├── main.py                 # Main script and general configuration
 │
 ├── requirements.txt        # Python dependencies

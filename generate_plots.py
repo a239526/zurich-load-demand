@@ -151,32 +151,34 @@ def plot_daily_average_total(case, unbalanced=UNBALANCED):
         raise ValueError(f"No bus demand columns found in case {case}.")
 
     # Calculate total demand across all buses and phases
-    df["kW_total"] = df[kw_columns].sum(axis=1)
-    df["kvar_total"] = df[kvar_columns].sum(axis=1)
-    df["time"] = df["timestamp"].dt.strftime("%H:%M")
+    total_demand = pd.DataFrame({
+        "kW": df[kw_columns].sum(axis=1),
+        "kvar": df[kvar_columns].sum(axis=1),
+        "time": df["timestamp"].dt.strftime("%H:%M")
+    })
 
     # Calculate the average total demand for each time of day
-    daily_profile = df.groupby("time")[["kW_total", "kvar_total"]].mean()
+    daily_profile = total_demand.groupby("time")[["kW", "kvar"]].mean()
 
     fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
 
     # Active power
-    axes[0].plot(daily_profile.index, daily_profile["kW_total"],
+    axes[0].plot(daily_profile.index, daily_profile["kW"],
                  marker="o", markersize=4, color=LOAD_COLOR, linewidth=2)
-    axes[0].axhline(daily_profile["kW_total"].mean(), color=MEAN_COLOR,
+    axes[0].axhline(daily_profile["kW"].mean(), color=MEAN_COLOR,
                     linewidth=2,
-                    label=f"Mean: {daily_profile['kW_total'].mean():.2f} kW")
+                    label=f"Mean: {daily_profile['kW'].mean():.2f} kW")
     axes[0].set_title(f"Average Daily Total Active Power - Case {case}")
     axes[0].set_ylabel("Total Load (kW)")
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
     # Reactive power
-    axes[1].plot(daily_profile.index, daily_profile["kvar_total"],
+    axes[1].plot(daily_profile.index, daily_profile["kvar"],
                  marker="o", markersize=4, color=LOAD_COLOR, linewidth=2)
-    axes[1].axhline(daily_profile["kvar_total"].mean(), color=MEAN_COLOR,
+    axes[1].axhline(daily_profile["kvar"].mean(), color=MEAN_COLOR,
                     linewidth=2,
-                    label=f"Mean: {daily_profile['kvar_total'].mean():.2f} kvar")
+                    label=f"Mean: {daily_profile['kvar'].mean():.2f} kvar")
     axes[1].set_title(f"Average Daily Total Reactive Power - Case {case}")
     axes[1].set_ylabel("Total Load (kvar)")
     axes[1].set_xlabel("Time of Day")

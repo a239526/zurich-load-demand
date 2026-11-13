@@ -14,7 +14,7 @@ INSTALLATION_TYPES = ['Single-family house', 'Common areas', 'Apartment'] #["Sin
 
 # parameters for demand csv creation
 CASES = [5, 13, 34, 123] # [5, 13, 34, 123] 
-UNBALANCED = True # set to True to create unbalanced
+UNBALANCED = True # set to True to create unbalanced, False to create balanced demand profiles
 
 # parameters for plot creation
 GENERATE_PLOTS = True

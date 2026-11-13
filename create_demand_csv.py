@@ -6,7 +6,7 @@ import pandas as pd
 # random seeds
 SEED_METER = 42
 SEED_CONSUMPTION = 123
-SEED_PHASE = 456
+SEED_PHASE = 234
 
 # consumption ranges in kW
 CONSUMPTION_RANGES = {"low": (1, 5), "medium": (5, 15), "high": (15, 25)}
