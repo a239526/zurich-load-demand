@@ -1,0 +1,6 @@
+{
+    "bus_002": {"n_low": 9, "n_medium": 3, "n_high": 2},
+    "bus_003": {"n_low": 3, "n_medium": 8, "n_high": 3},
+    "bus_004": {"n_low": 3, "n_medium": 2, "n_high": 8},
+    "bus_005": {"n_low": 5, "n_medium": 5, "n_high": 5}
+}

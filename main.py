@@ -1,5 +1,7 @@
 from create_parquet import save_processed_data, read_processed_data
 from meter_statistics import save_statistics
+from data_treatment import normalize_data, filter_daytime_meters
+from create_demand_csv import create_demand_csv
 
 PROCESSED_PATH = "outputs/smart_meter_data.parquet"
 
@@ -8,6 +10,11 @@ CREATE_PARQUET = False  # set to True to create parquet files, False to read exi
 AVAILABLE_DATA_THRESHOLD = 0.95
 INSTALLATION_TYPES = ['Single-family house', 'Common areas', 'Apartment'] #["Single-family house", "Common areas", "Heat pump", "Underground garage", "EV charging station", "Apartment"]
 
+# parameters for demand csv creation
+CASES = [5, 13, 34, 123] # [5, 13, 34, 123] 
+UNBALANCED = True # set to True to create unbalanced
+
+
 if __name__ == "__main__":
     # creates parquet files
     if CREATE_PARQUET:
@@ -15,3 +22,8 @@ if __name__ == "__main__":
 
     meters_id, data = read_processed_data(PROCESSED_PATH)
     meter_statistics, summary = save_statistics(data, "outputs/meter_statistics.csv", "outputs/statistics_summary.json")
+
+    processed_meters, processed_data = filter_daytime_meters(normalize_data(data))
+
+    for case in CASES:
+        demand, meter_allocation = create_demand_csv(data=processed_data, adequate_meters=processed_meters, case=case, unbalanced=UNBALANCED)
