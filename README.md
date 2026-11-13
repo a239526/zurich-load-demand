@@ -1,87 +1,67 @@
-
 # Electricity Demand Generation
 
 ## Overview
 
-This repository provides Python scripts to process residential smart meter data and generate electricity demand profiles for distribution network test cases.
+This repository provides Python scripts to process residential smart meter data and generate active and reactive power demand profiles for distribution network test cases.
 
-The scripts use measured electricity consumption profiles to generate active and reactive power demand at **15-minute intervals**. Individual meter profiles are normalized and subsequently scaled according to randomly generated maximum active power values, allowing different residential consumption levels to be represented.
+The generated profiles have a 15-minute resolution and are available in two configurations:
 
-The repository currently supports four distribution network cases: case5, case13, case34 and case123, where the number represents the amount of buses.
+- **Balanced:** All selected meter profiles are aggregated into one demand profile per bus.
+- **Unbalanced:** Meters are randomly assigned to phases (a, b, or c), and demand is aggregated separately for each phase.
 
-For each case, the number of low-, medium-, and high-consumption households assigned to each bus is defined in a JSON configuration file.
-
-The demand generation supports two configurations:
-
-- **Balanced:** All selected meter profiles are aggregated into a single active and reactive power profile for each bus.
-- **Unbalanced:** Each selected meter is randomly assigned to one of three phases (a, b, or c), and the profiles are aggregated separately for each phase.
+The repository includes configurations for four distribution network cases: case5, case13, case34, and case123. Custom cases can also be added by creating a corresponding bus configuration.
 
 Additionally, the scripts generate meter statistics and save the allocation of selected meters and their corresponding maximum power scaling factors for each bus and phase.
 
 ## Data Source
 
-The smart meter data used in this repository comes from:
+The smart meter data comes from:
 
 Kaiser, K., Kreft, M., González Vayá, M., & Hug, H. (2026). *Dataset on residential electricity load profiles in Switzerland* (Version v1) [Dataset]. Zenodo. [https://doi.org/10.5281/zenodo.21398769](https://doi.org/10.5281/zenodo.21398769)
 
-The original dataset contains residential electricity measurements at 15-minute intervals, together with metadata describing the meters and their installation types.
-
-Active and reactive power are calculated from the measured energy values. The resulting power profiles are expressed in kW and kvar, respectively.
+The original dataset contains residential electricity measurements at 15-minute intervals, along with metadata describing the meters and their installation types.
 
 ## Getting Started
 
-### 1. Clone the repository
+1. Clone the repository:
 
-```bash
-git clone https://github.com/a239526/zurich-load-demand
-cd zurich-load-demand
-```
+   ```bash
+   git clone https://github.com/a239526/zurich-load-demand
+   cd zurich-load-demand
+   ```
+2. Create and activate a virtual environment:
 
-### 2. Create and activate a virtual environment
+   ```bash
+   python -m venv .venv
+   ```
 
-Create the virtual environment:
+   **Windows (PowerShell):**
 
-```bash
-python -m venv .venv
-```
+   ```bash
+   .\.venv\Scripts\Activate.ps1
+   ```
 
-Activate it:
+   **Linux / macOS:**
 
-**Windows (PowerShell):**
+   ```bash
+   source .venv/bin/activate
+   ```
+3. Install the dependencies:
 
-```bash
-.\.venv\Scripts\Activate.ps1
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Configure `main.py` and run:
 
-**Linux / macOS:**
-
-```bash
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Run the main script
-
-Adjust the parameters in `main.py` according to the desired processing and demand generation settings.
-
-Run the main script:
-
-```bash
-python main.py
-```
+   ```bash
+   python main.py
+   ```
 
 The script processes the smart meter data, calculates meter statistics, filters the available profiles, and generates the demand CSV and meter allocation JSON files for each selected case.
 
 ## Configuration
 
-The generation process can be configured directly in `main.py`.
-
-### General configuration
+The main parameters are defined in `main.py`:
 
 ```python
 PROCESSED_PATH = "outputs/smart_meter_data.parquet"
@@ -94,30 +74,16 @@ CASES = [5, 13, 34, 123]
 UNBALANCED = True
 ```
 
-The parameters can be adjusted as follows:
-
-| **Parameter**          | **Description**                                                                                                                                                                               |
+| Parameter                    | Description                                                                                                                                                                                         |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PROCESSED_PATH`           | Path where the processed smart meter data is saved and loaded.                                                                                                                                      |
-| `CREATE_PARQUET`           | If `True`, processes the original meter CSV files and creates the Parquet file. If `False`, loads the existing Parquet file.                                                                    |
+| `PROCESSED_PATH`           | Path used to save and load the processed smart meter data.                                                                                                                                          |
+| `CREATE_PARQUET`           | Set to `True` to process the original dataset and create the Parquet file. Set to `False` to reuse an existing file.                                                                            |
 | `AVAILABLE_DATA_THRESHOLD` | Minimum proportion of available data points required for a meter to be selected. For example, `0.95` retains meters with at least 95% of the maximum number of data points found in the metadata. |
 | `INSTALLATION_TYPES`       | List of installation types to retain during metadata filtering.                                                                                                                                     |
-| `CASES`                    | List of distribution network cases to process. Supported values are `5`, `13`, `34`, and `123`.                                                                                             |
+| `CASES`                    | List of network cases to generate demand for. Current supported values are `5`, `13`, `34`, and `123`.                                                                                      |
 | `UNBALANCED`               | If `True`, generates separate demand profiles for each phase. If `False`, generates one aggregated profile per bus.                                                                             |
 
-To create the Parquet file from the original dataset, set:
-
-```python
-CREATE_PARQUET = True
-```
-
-After the file has been generated, it can be reused in subsequent executions by setting:
-
-```python
-CREATE_PARQUET = False
-```
-
-This avoids loading and processing all original meter CSV files every time the script is executed.
+The Parquet file only needs to be created once using the desired threshold and installation types configuration. Afterward, set `CREATE_PARQUET = False` to avoid processing the original meter files again.
 
 The `CASES` parameter accepts multiple cases, which are processed sequentially. For example:
 
@@ -125,31 +91,9 @@ The `CASES` parameter accepts multiple cases, which are processed sequentially. 
 CASES = [5, 13, 34, 123]
 ```
 
-To process only one case:
+### Bus configuration
 
-```python
-CASES = [34]
-```
-
-### Demand configuration
-
-The number of households assigned to each bus is defined in a separate `bus_config.json` file for each case.
-
-The configuration files are stored in the `cases/` directory:
-
-```text
-cases/
-├── case5/
-│   └── bus_config.json
-├── case13/
-│   └── bus_config.json
-├── case34/
-│   └── bus_config.json
-└── case123/
-    └── bus_config.json
-```
-
-Each file specifies the number of low-, medium-, and high-consumption households for every bus.
+Each case has a `bus_config.json` file under `cases/`. It defines the number of low-, medium-, and high-consumption meters assigned to each bus.
 
 For example:
 
@@ -160,11 +104,7 @@ For example:
 }
 ```
 
-A bus can have zero assigned meters. In this case, it is skipped during demand generation and does not produce columns in the output CSV.
-
-### Consumption ranges and random seeds
-
-The consumption categories are associated with the following maximum active power ranges, defined in `create_demand_csv.py`:
+The consumption categories correspond to the following maximum active power ranges in kW, defined in `create_demand_csv.py`:
 
 ```python
 CONSUMPTION_RANGES = {
@@ -174,9 +114,33 @@ CONSUMPTION_RANGES = {
 }
 ```
 
-For each selected meter, a maximum active power value is randomly generated using a uniform distribution within the corresponding range. This value is used as the scaling factor for both active and reactive power profiles.
+For each selected meter, a maximum active power value is randomly sampled from the corresponding range. This value scales both its normalized active and reactive power profiles.
 
-Three independent random seeds control meter selection, maximum power generation, and phase assignment:
+### Creating a custom case
+
+To generate demand for another distribution network, create a new folder under `cases/` and add a `bus_config.json` file.
+
+For example, to add a case with 14 buses:
+
+1. Create the folder `cases/case14/`.
+2. Add `cases/case14/bus_config.json`, specifying the number of meters in each consumption category for every bus.
+
+   ```json
+   {
+       "bus_002": {"n_low": 5, "n_medium": 3, "n_high": 2},
+       "bus_003": {"n_low": 4, "n_medium": 6, "n_high": 1},
+       "bus_004": {"n_low": 0, "n_medium": 2, "n_high": 1}
+   }
+   ```
+3. Add the new case to `CASES` in `main.py`:
+
+   ```python
+   CASES = [14]
+   ```
+
+### Random seeds
+
+Three independent seeds control meter selection, maximum power generation, and phase assignment:
 
 ```python
 SEED_METER = 42
@@ -184,7 +148,7 @@ SEED_CONSUMPTION = 123
 SEED_PHASE = 456
 ```
 
-The random number generators are initialized inside `create_demand_csv()`. Therefore, repeated calls with the same inputs and configuration produce reproducible results.
+The random number generators are initialized inside `create_demand_csv()`, allowing reproducible results for repeated calls with the same inputs and configuration.
 
 ## Data Processing
 
@@ -259,191 +223,35 @@ The `create_demand_csv.py` script generates the demand profiles using the normal
 
 For each bus:
 
-- The required number of meters is selected randomly from the available filtered meters, without replacement within that bus.
+- The required number of meters is selected randomly from the available filtered normalized meters, without replacement within that bus.
 - Each selected meter is assigned a consumption category according to the bus configuration.
 - A maximum active power value is randomly generated within the corresponding consumption range.
 - The normalized active and reactive power profiles are multiplied by this value.
 - The resulting profiles are aggregated by timestamp.
 
-For the balanced configuration, all selected meter profiles are aggregated into one active and reactive power profile per bus.
-
-For the unbalanced configuration, each selected meter is randomly assigned to phase a, b, or c. The profiles are then aggregated separately for each phase.
-
-If a phase receives no meters, its active and reactive power profiles are set to zero. However, if an entire bus receives no meters, it is skipped and no columns are generated for that bus.
+For the balanced configuration, all selected meter profiles are aggregated into one active and reactive power profile per bus. For the unbalanced configuration, each selected meter is randomly assigned to phase a, b, or c. The profiles are then aggregated separately for each phase.
 
 The script also records the meter IDs, consumption categories, and maximum power scaling factors associated with each bus and phase.
 
-## Output
+## Outputs
 
-Generated files are saved in the `outputs/` directory, which is created automatically if it does not already exist.
+All generated files are saved under `outputs/`. The directory is created automatically when needed.
 
-### Processed smart meter data
+| File                                                          | Description                                                                                                       |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `smart_meter_data.parquet`                                  | Processed smart meter profiles, including timestamps, active and reactive power, installation type, and meter ID. |
+| `meter_statistics.csv`                                      | Individual statistics for each meter and its consumption category.                                                |
+| `statistics_summary.json`                                   | Aggregated statistics by installation type and consumption category.                                              |
+| `{case}/{balanced\|unbalanced}_demand.csv`                   | Generated demand profiles for each selected case.                                                                 |
+| `{case}/{balanced\|unbalanced}_demand_meter_allocation.json` | Meter allocation and scaling factors used to generate the corresponding demand profiles.                          |
 
-The processed meter data is saved as a single Parquet file:
+Each demand CSV contains one row per timestamp and separate columns for active and reactive power.
 
-```text
-outputs/
-└── smart_meter_data.parquet
-```
+**Balanced configuration:** Each bus with assigned meters generates two columns, `Pbus_<bus_id>` and `Qbus_<bus_id>`.
 
-The file contains the following columns:
+**Unbalanced configuration:** Each bus with assigned meters generates six columns, corresponding to active and reactive power for phases a, b, and c. If a phase receives no meters, its columns are still generated with zero values. Buses with no assigned meters are omitted.
 
-| **Column**      | **Description**                        |
-| --------------------- | -------------------------------------------- |
-| `timestamp`         | Timestamp of the power measurement.          |
-| `kW`                | Active power in kW.                          |
-| `kvar`              | Reactive power in kvar.                      |
-| `installation_type` | Installation type associated with the meter. |
-| `meter_id`          | Unique meter identifier.                     |
-
-The `read_processed_data()` function loads this file and reconstructs a dictionary in which each meter ID is associated with its corresponding DataFrame.
-
-### Meter statistics
-
-The `save_statistics()` function generates two files:
-
-```text
-outputs/
-├── meter_statistics.csv
-└── statistics_summary.json
-```
-
-The `meter_statistics.csv` file contains the individual statistics calculated for each meter, including its mean, maximum, and minimum active and reactive power, installation type, and maximum active power consumption category.
-
-The `statistics_summary.json` file contains aggregated statistics, including:
-
-- Total number of meters.
-- Number of meters per installation type.
-- Number of meters per maximum active power range.
-- Number of meters per installation type and maximum active power range.
-- Consumption ranges used for classification.
-
-### Demand CSV files
-
-Demand files are saved in a separate directory for each case, using the following naming convention:
-
-```text
-outputs/
-├── case5/
-│   ├── balanced_demand.csv
-│   └── balanced_demand_meter_allocation.json
-├── case13/
-│   ├── unbalanced_demand.csv
-│   └── unbalanced_demand_meter_allocation.json
-├── case34/
-│   ├── unbalanced_demand.csv
-│   └── unbalanced_demand_meter_allocation.json
-└── case123/
-    ├── unbalanced_demand.csv
-    └── unbalanced_demand_meter_allocation.json
-```
-
-The example above illustrates the output structure when different configurations are generated for different cases. The actual files depend on the values defined in `CASES` and `UNBALANCED`.
-
-Each CSV contains one row per timestamp and separate columns for the active and reactive power of each bus or phase.
-
-**Balanced configuration**
-
-Each bus with assigned meters generates two columns:
-
-- `Pbus_<bus_id>`: Active power in kW.
-- `Qbus_<bus_id>`: Reactive power in kvar.
-
-For example:
-
-```text
-timestamp,Pbus_002,Qbus_002,Pbus_003,Qbus_003
-2023-01-01 00:00:00,12.45,3.21,8.32,2.14
-2023-01-01 00:15:00,13.10,3.45,9.01,2.36
-2023-01-01 00:30:00,14.25,3.82,8.75,2.28
-```
-
-**Unbalanced configuration**
-
-Each bus with assigned meters generates six columns, corresponding to the active and reactive power of its three phases:
-
-- `Pbus_<bus_id>_a` and `Qbus_<bus_id>_a`.
-- `Pbus_<bus_id>_b` and `Qbus_<bus_id>_b`.
-- `Pbus_<bus_id>_c` and `Qbus_<bus_id>_c`.
-
-For example:
-
-```text
-timestamp,Pbus_002_a,Qbus_002_a,Pbus_002_b,Qbus_002_b,Pbus_002_c,Qbus_002_c
-2023-01-01 00:00:00,4.25,1.10,3.80,0.95,4.40,1.16
-2023-01-01 00:15:00,4.60,1.25,4.10,1.02,4.40,1.18
-2023-01-01 00:30:00,4.80,1.32,4.25,1.10,4.65,1.22
-```
-
-If a phase receives no meters, its corresponding columns are still generated with zero values. Buses with no assigned meters are omitted entirely.
-
-### Meter allocation JSON
-
-Alongside each demand CSV, a JSON file is generated to record the meter allocation and scaling factors used during demand generation.
-
-The JSON file follows the same base name as the demand CSV, with the suffix `_meter_allocation.json`.
-
-For example:
-
-```text
-outputs/
-└── case34/
-    ├── unbalanced_demand.csv
-    └── unbalanced_demand_meter_allocation.json
-```
-
-Each entry contains the following information:
-
-| **Field**      | **Description**                                                                                                                            |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `meter_id`         | Identifier of the selected smart meter.                                                                                                          |
-| `max_power`        | Maximum active power assigned to the meter, in kW. This is also the scaling factor applied to its normalized active and reactive power profiles. |
-| `consumption_type` | Consumption category assigned to the meter (`low`, `medium`, or `high`).                                                                   |
-
-For the balanced configuration, meters are grouped directly by bus:
-
-```json
-{
-    "bus_002": [
-        {
-            "meter_id": 125,
-            "max_power": 3.45,
-            "consumption_type": "low"
-        },
-        {
-            "meter_id": 238,
-            "max_power": 12.8,
-            "consumption_type": "medium"
-        }
-    ]
-}
-```
-
-For the unbalanced configuration, meters are grouped by bus and phase:
-
-```json
-{
-    "bus_002": {
-        "a": [
-            {
-                "meter_id": 125,
-                "max_power": 3.45,
-                "consumption_type": "low"
-            }
-        ],
-        "b": [],
-        "c": [
-            {
-                "meter_id": 238,
-                "max_power": 12.8,
-                "consumption_type": "medium"
-            }
-        ]
-    }
-}
-```
-
-This file allows the generated demand profiles to be traced back to the original smart meters and their corresponding scaling factors.
+The meter allocation JSON records the selected meter IDs, their consumption categories, and their maximum active power scaling factors. In balanced cases, meters are grouped by bus; in unbalanced cases, they are grouped by bus and phase. This allows the generated profiles to be traced back to the original smart meter data.
 
 ## Repository Structure
 
