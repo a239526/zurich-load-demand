@@ -234,13 +234,13 @@ The `data_treatment.py` script normalizes the active and reactive power profiles
 
 Both quantities are divided by the maximum active power of the corresponding meter:
 
-\[
+$$
 P_{\mathrm{norm}}(t) = \frac{P(t)}{P_{\max}}
-\]
+$$
 
-\[
+$$
 Q_{\mathrm{norm}}(t) = \frac{Q(t)}{P_{\max}}
-\]
+$$
 
 This normalization preserves the relationship between active and reactive power while setting the maximum active power of each profile to one.
 
